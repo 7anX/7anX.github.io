@@ -1,0 +1,51 @@
+{{- if (.Param "ShowToc") }}
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  // 只在宽屏且文章页运行
+  if (window.innerWidth < 1280) return;
+  var inlineToc = document.querySelector('.post-single > details.toc');
+  if (!inlineToc) return;
+
+  // 创建右侧容器
+  var aside = document.createElement('div');
+  aside.className = 'toc-aside';
+
+  var title = document.createElement('div');
+  title.className = 'toc-title';
+  title.textContent = '目录';
+  aside.appendChild(title);
+
+  // 克隆目录内容（ul 部分）
+  var inner = inlineToc.querySelector('.inner');
+  if (inner) {
+    var clone = inner.cloneNode(true);
+    aside.appendChild(clone);
+  }
+
+  document.body.appendChild(aside);
+
+  // 阅读进度高亮
+  var links = aside.querySelectorAll('a[href^="#"]');
+  var headings = [];
+  links.forEach(function (a) {
+    var id = decodeURIComponent(a.getAttribute('href').slice(1));
+    var el = document.getElementById(id);
+    if (el) headings.push({ el: el, a: a });
+  });
+
+  function onScroll() {
+    var scrollY = window.scrollY + 80;
+    var current = null;
+    for (var i = 0; i < headings.length; i++) {
+      if (headings[i].el.offsetTop <= scrollY) current = headings[i];
+      else break;
+    }
+    links.forEach(function (a) { a.classList.remove('active'); });
+    if (current) current.a.classList.add('active');
+  }
+
+  window.addEventListener('scroll', onScroll, { passive: true });
+  onScroll();
+});
+</script>
+{{- end }}
