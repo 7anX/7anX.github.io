@@ -1,0 +1,286 @@
+/* ========================================
+   霞鹜文楷 - 圆润中文字体
+   ======================================== */
+@import url('https://cdn.jsdelivr.net/npm/lxgw-wenkai-webfont@1.7.0/style.css');
+
+/* ========================================
+   全局字体设置
+   ======================================== */
+body,
+.post-content,
+.post-title,
+.entry-title,
+h1, h2, h3, h4, h5, h6 {
+  font-family: 'LXGW WenKai', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', serif;
+}
+
+/* 代码字体保持等宽 */
+code, pre, .highlight {
+  font-family: 'JetBrains Mono', 'Fira Code', 'Consolas', monospace;
+}
+
+/* ========================================
+   正文排版优化
+   ======================================== */
+.post-content {
+  line-height: 1.9;
+  font-size: 1.02rem;
+  letter-spacing: 0.01em;
+}
+
+.post-content p {
+  margin-bottom: 1.4em;
+}
+
+/* ========================================
+   浅色模式色调
+   ======================================== */
+:root {
+  --theme: #ffffff;
+  --entry: #ffffff;
+  --primary: #1a1a1a;
+  --secondary: #666666;
+  --border: #e8e8e8;
+  --content: #333333;
+  --hljs-bg: #f6f8fa;
+  --code-bg: #f6f8fa;
+  --tertiary: #f0f0f0;
+  --gap: 24px;
+}
+
+/* ========================================
+   暗色模式色调
+   ======================================== */
+.dark {
+  --theme: #1d1e20;
+  --entry: #2e2e33;
+  --primary: #e0e0e0;
+  --secondary: #ababab;
+  --border: #3a3a3e;
+  --content: #d4d4d4;
+  --hljs-bg: #2b2d30;
+  --code-bg: #2b2d30;
+  --tertiary: #3a3a3e;
+}
+
+.dark body {
+  background-color: #1d1e20;
+}
+
+/* ========================================
+   导航栏精简
+   ======================================== */
+.nav {
+  border-bottom: 1px solid var(--border);
+}
+
+.logo a {
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+
+/* 主题切换按钮美化 */
+#theme-toggle {
+  cursor: pointer;
+  margin-left: 8px;
+}
+
+/* ========================================
+   文章列表卡片 - 圆角与留白
+   ======================================== */
+.post-entry {
+  border-radius: 12px;
+  padding: 20px 24px;
+  margin-bottom: 14px;
+  border: 1px solid var(--border);
+  background: var(--entry);
+  transition: box-shadow 0.3s ease, transform 0.2s ease, border-color 0.3s ease;
+}
+
+.post-entry:hover {
+  border-color: var(--primary);
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.12);
+  transform: translateY(-2px);
+}
+
+.dark .post-entry:hover {
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.4);
+}
+
+/* 封面图圆角 */
+.post-entry .entry-cover {
+  border-radius: 10px;
+  overflow: hidden;
+  margin-bottom: 12px;
+}
+
+.post-entry .entry-cover img {
+  border-radius: 10px;
+}
+
+/* ========================================
+   首页 homeInfo 区域
+   ======================================== */
+.home-info-container {
+  padding: 2.5rem 0 2rem;
+}
+
+.home-info-container h1 {
+  font-size: 1.8rem;
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+}
+
+.home-info-container p {
+  color: var(--secondary);
+  font-size: 1rem;
+  line-height: 1.7;
+}
+
+/* ========================================
+   标签样式 - 双主题适配
+   ======================================== */
+.post-tags a,
+.terms-tags a {
+  border-radius: 6px;
+  padding: 3px 12px;
+  font-size: 0.82rem;
+  background: var(--tertiary);
+  border: none;
+  color: var(--secondary);
+  transition: background 0.2s ease, color 0.2s ease;
+}
+
+.post-tags a:hover,
+.terms-tags a:hover {
+  background: var(--border);
+  color: var(--primary);
+}
+
+/* ========================================
+   代码块 - 双主题适配
+   ======================================== */
+.highlight,
+pre {
+  border-radius: 10px;
+  font-size: 0.88rem;
+}
+
+.post-content pre {
+  padding: 16px 20px;
+}
+
+/* 代码复制按钮美化 */
+.copy-code {
+  border-radius: 6px;
+}
+
+/* ========================================
+   目录（TOC）优化
+   ======================================== */
+.toc {
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  padding: 12px 16px;
+  margin-bottom: 24px;
+  background: var(--entry);
+}
+
+.toc .inner {
+  margin: 0;
+}
+
+.toc details summary {
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.toc ul {
+  list-style: none;
+  padding-left: 16px;
+}
+
+.toc a {
+  color: var(--secondary);
+  transition: color 0.2s ease;
+}
+
+.toc a:hover {
+  color: var(--primary);
+}
+
+/* ========================================
+   搜索页面
+   ======================================== */
+#searchInput {
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--entry);
+  color: var(--primary);
+  padding: 12px 18px;
+  font-size: 1rem;
+}
+
+#searchInput:focus {
+  border-color: var(--primary);
+  outline: none;
+}
+
+/* ========================================
+   分割线弱化
+   ======================================== */
+hr {
+  border-color: var(--border);
+}
+
+/* ========================================
+   页脚简化
+   ======================================== */
+.footer {
+  color: var(--secondary);
+  font-size: 0.82rem;
+  opacity: 0.7;
+}
+
+/* ========================================
+   滚动条美化（暗色适配）
+   ======================================== */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--secondary);
+}
+
+/* ========================================
+   文章内图片圆角
+   ======================================== */
+.post-content img {
+  border-radius: 10px;
+  margin: 1em 0;
+}
+
+/* ========================================
+   响应式优化
+   ======================================== */
+@media (max-width: 768px) {
+  .post-entry {
+    padding: 16px 18px;
+    margin-bottom: 10px;
+  }
+
+  .home-info-container h1 {
+    font-size: 1.5rem;
+  }
+}

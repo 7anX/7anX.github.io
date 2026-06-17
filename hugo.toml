@@ -1,18 +1,64 @@
 baseURL = "https://7anX.github.io/"
-languageCode = "zh-cn"
+defaultContentLanguage = "zh-cn"
 title = "7anX 的技术博客"
 theme = "PaperMod"
+paginate = 10
+
+# 启用搜索功能所需的输出格式
+[outputs]
+  home = ["HTML", "RSS", "JSON"]
 
 [params]
+  # 主题模式：auto 跟随系统深/浅色偏好
+  defaultTheme = "auto"
+  # 显示主题切换按钮
+  disableThemeToggle = false
+
+  # 文章信息
   ShowReadingTime = true
   ShowCodeCopyButtons = true
   ShowPostNavLinks = true
   ShowBreadCrumbs = true
   ShowShareButtons = false
-  defaultTheme = "auto"
+  ShowWordCount = true
+
+  # 目录（TOC）
+  ShowToc = true
+  TocOpen = true
+
+  # 作者与描述
   author = "7anX"
   description = "技术分享、学习记录"
 
+  # 搜索功能
+  [params.fuseOpts]
+    isCaseSensitive = false
+    shouldSort = true
+    location = 0
+    distance = 1000
+    threshold = 0.4
+    minMatchCharLength = 0
+    keys = ["title", "permalink", "summary", "content"]
+
+  # 首页信息展示
+  [params.homeInfoParams]
+    Title = "Hi, 我是 7anX 👋"
+    Content = "这里记录我的技术探索与学习笔记，欢迎一起交流。"
+
+  # 社交图标
+  [[params.socialIcons]]
+    name = "github"
+    url = "https://github.com/7anX"
+
+  # 文章封面图设置
+  [params.cover]
+    hidden = false
+    hiddenInList = false
+    hiddenInSingle = false
+    linkFullImages = true
+    responsiveImages = true
+
+# 导航菜单
 [menu]
   [[menu.main]]
     name = "文章"
@@ -23,6 +69,24 @@ theme = "PaperMod"
     url = "/tags/"
     weight = 2
   [[menu.main]]
+    name = "搜索"
+    url = "/search/"
+    weight = 3
+  [[menu.main]]
     name = "关于"
     url = "/about/"
-    weight = 3
+    weight = 4
+
+# Markdown 渲染设置
+[markup]
+  [markup.highlight]
+    anchorLineNos = false
+    codeFences = true
+    guessSyntax = true
+    lineNos = false
+    noClasses = false
+    style = "dracula"
+  [markup.tableOfContents]
+    startLevel = 2
+    endLevel = 4
+    ordered = false
