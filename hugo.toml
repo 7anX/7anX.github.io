@@ -1,0 +1,28 @@
+baseURL = "https://7anX.github.io/"
+languageCode = "zh-cn"
+title = "7anX 的技术博客"
+theme = "PaperMod"
+
+[params]
+  ShowReadingTime = true
+  ShowCodeCopyButtons = true
+  ShowPostNavLinks = true
+  ShowBreadCrumbs = true
+  ShowShareButtons = false
+  defaultTheme = "auto"
+  author = "7anX"
+  description = "技术分享、学习记录"
+
+[menu]
+  [[menu.main]]
+    name = "文章"
+    url = "/posts/"
+    weight = 1
+  [[menu.main]]
+    name = "标签"
+    url = "/tags/"
+    weight = 2
+  [[menu.main]]
+    name = "关于"
+    url = "/about/"
+    weight = 3
