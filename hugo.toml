@@ -2,7 +2,11 @@ baseURL = "https://7anX.github.io/"
 defaultContentLanguage = "zh-cn"
 title = "7anX 的技术博客"
 theme = "PaperMod"
-paginate = 10
+enableRobotsTXT = true
+hasCJKLanguage = true
+
+[pagination]
+  pagerSize = 10
 
 # 启用搜索功能所需的输出格式
 [outputs]
@@ -21,6 +25,7 @@ paginate = 10
   ShowBreadCrumbs = true
   ShowShareButtons = false
   ShowWordCount = true
+  comments = true
 
   # 目录（TOC）
   ShowToc = true
@@ -57,6 +62,21 @@ paginate = 10
     hiddenInSingle = false
     linkFullImages = true
     responsiveImages = true
+
+  # Giscus 评论系统：评论会保存到 GitHub Discussions
+  [params.giscus]
+    enable = true
+    repo = "7anX/7anX.github.io"
+    repoId = "R_kgDOS9d2Ww"
+    category = "Announcements"
+    categoryId = "DIC_kwDOS9d2W84C_epB"
+    mapping = "pathname"
+    strict = "0"
+    reactionsEnabled = "1"
+    emitMetadata = "0"
+    inputPosition = "bottom"
+    lang = "zh-CN"
+    loading = "lazy"
 
 # 导航菜单
 [menu]
