@@ -1,0 +1,3 @@
+User-agent: *
+Disallow:
+Sitemap: https://7anX.github.io/sitemap.xml
