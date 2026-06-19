@@ -1,8 +1,8 @@
 {{- if (.Param "ShowToc") }}
 <script>
 document.addEventListener('DOMContentLoaded', function () {
-  // 只在宽屏且文章页运行
-  if (window.innerWidth < 1280) return;
+  // 只在足够宽的文章页运行，避免目录压到正文
+  if (window.innerWidth < 1540) return;
   var inlineToc = document.querySelector('.post-single > details.toc');
   if (!inlineToc) return;
 
@@ -49,3 +49,179 @@ document.addEventListener('DOMContentLoaded', function () {
 });
 </script>
 {{- end }}
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  var headerSearch = document.querySelector('.header-search');
+  if (headerSearch) {
+    var input = headerSearch.querySelector('input[name="q"]');
+    var panel = headerSearch.querySelector('.header-search-panel');
+    var empty = headerSearch.querySelector('.header-search-empty');
+    var resultsList = headerSearch.querySelector('.header-search-results');
+    var more = headerSearch.querySelector('.header-search-more');
+    var searchData = null;
+    var activeIndex = -1;
+    var renderedResults = [];
+
+    function getIndexUrl() {
+      return new URL('{{ "index.json" | absLangURL }}', window.location.href).toString();
+    }
+
+    function openPanel() {
+      if (panel) panel.hidden = false;
+    }
+
+    function closePanel() {
+      if (panel) panel.hidden = true;
+      activeIndex = -1;
+    }
+
+    function setActive(index) {
+      var items = resultsList ? resultsList.querySelectorAll('a') : [];
+      items.forEach(function (item) { item.classList.remove('active'); });
+      activeIndex = index;
+      if (items[activeIndex]) items[activeIndex].classList.add('active');
+    }
+
+    function updateMoreLink(query) {
+      if (!more) return;
+      var url = new URL(headerSearch.action);
+      if (query) url.searchParams.set('q', query);
+      more.href = url.toString();
+    }
+
+    function renderHeaderResults(query) {
+      if (!resultsList || !empty) return;
+      resultsList.innerHTML = '';
+      renderedResults = [];
+      setActive(-1);
+      updateMoreLink(query);
+
+      if (!query) {
+        empty.textContent = '输入关键词搜索文章';
+        openPanel();
+        return;
+      }
+
+      if (!searchData) {
+        empty.textContent = '正在加载搜索索引...';
+        openPanel();
+        return;
+      }
+
+      var lowerQuery = query.toLowerCase();
+      renderedResults = searchData
+        .map(function (item) {
+          var title = (item.title || '').toLowerCase();
+          var summary = (item.summary || '').replace(/<[^>]+>/g, ' ').toLowerCase();
+          var content = (item.content || '').toLowerCase();
+          var score = 0;
+          if (title === lowerQuery) score += 100;
+          if (title.indexOf(lowerQuery) !== -1) score += 60;
+          if (summary.indexOf(lowerQuery) !== -1) score += 25;
+          if (content.indexOf(lowerQuery) !== -1) score += 10;
+          return { item: item, score: score };
+        })
+        .filter(function (result) { return result.score > 0; })
+        .sort(function (a, b) { return b.score - a.score; })
+        .slice(0, 6)
+        .map(function (result) { return result.item; });
+      if (!renderedResults.length) {
+        empty.textContent = '没有找到相关文章';
+        openPanel();
+        return;
+      }
+
+      empty.textContent = '';
+      renderedResults.forEach(function (item, index) {
+        var li = document.createElement('li');
+        var link = document.createElement('a');
+        link.href = item.permalink;
+        link.dataset.index = String(index);
+
+        var title = document.createElement('span');
+        title.className = 'header-search-title';
+        title.textContent = item.title || item.permalink;
+
+        var summary = document.createElement('span');
+        summary.className = 'header-search-summary';
+        summary.textContent = (item.content || item.summary || '').replace(/\s+/g, ' ').trim().slice(0, 82);
+
+        link.appendChild(title);
+        if (summary.textContent) link.appendChild(summary);
+        li.appendChild(link);
+        resultsList.appendChild(li);
+      });
+      openPanel();
+    }
+
+    function loadIndex() {
+      if (searchData) return Promise.resolve();
+      return fetch(getIndexUrl())
+        .then(function (response) { return response.ok ? response.json() : []; })
+        .then(function (data) {
+          searchData = data || [];
+        })
+        .catch(function () {
+          if (empty) empty.textContent = '搜索索引加载失败';
+        });
+    }
+
+    if (input) {
+      input.addEventListener('focus', function () {
+        openPanel();
+        loadIndex().then(function () { renderHeaderResults(input.value.trim()); });
+      });
+
+      input.addEventListener('input', function () {
+        var query = input.value.trim();
+        openPanel();
+        loadIndex().then(function () { renderHeaderResults(query); });
+      });
+
+      input.addEventListener('keydown', function (event) {
+        var links = resultsList ? resultsList.querySelectorAll('a') : [];
+        if (event.key === 'ArrowDown' && links.length) {
+          event.preventDefault();
+          setActive(Math.min(activeIndex + 1, links.length - 1));
+        } else if (event.key === 'ArrowUp' && links.length) {
+          event.preventDefault();
+          setActive(Math.max(activeIndex - 1, 0));
+        } else if (event.key === 'Enter' && activeIndex >= 0 && links[activeIndex]) {
+          event.preventDefault();
+          links[activeIndex].click();
+        } else if (event.key === 'Escape') {
+          closePanel();
+          input.blur();
+        }
+      });
+    }
+
+    document.addEventListener('click', function (event) {
+      if (!headerSearch.contains(event.target)) closePanel();
+    });
+
+    headerSearch.addEventListener('submit', function (event) {
+      var query = input ? input.value.trim() : '';
+      if (!query) {
+        event.preventDefault();
+        closePanel();
+      }
+    });
+  }
+
+  var params = new URLSearchParams(window.location.search);
+  var query = params.get('q');
+  var searchInput = document.getElementById('searchInput');
+  if (!query || !searchInput) return;
+
+  function applySearchQuery() {
+    searchInput.value = query;
+    searchInput.dispatchEvent(new Event('input', { bubbles: true }));
+  }
+
+  applySearchQuery();
+  window.setTimeout(applySearchQuery, 250);
+  window.setTimeout(applySearchQuery, 700);
+});
+</script>
