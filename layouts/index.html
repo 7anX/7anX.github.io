@@ -1,0 +1,15 @@
+<!doctype html>
+<html lang="{{ site.LanguageCode | default "zh-cn" }}">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="refresh" content="0; url={{ "posts/" | relURL }}">
+  <link rel="canonical" href="{{ "posts/" | absURL }}">
+  <title>{{ site.Title }}</title>
+  <script>
+    window.location.replace('/posts/');
+  </script>
+</head>
+<body>
+  <a href="{{ "posts/" | relURL }}">进入文章列表</a>
+</body>
+</html>

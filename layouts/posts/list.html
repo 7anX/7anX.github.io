@@ -1,0 +1,14 @@
+{{- define "main" }}
+
+{{- if .Content }}
+<div class="post-content md-content">
+  {{- if not (.Param "disableAnchoredHeadings") }}
+  {{- partial "anchored_headings.html" .Content -}}
+  {{- else }}{{ .Content }}{{ end }}
+</div>
+{{- end }}
+
+{{- $pages := union .RegularPages .Sections -}}
+{{- partial "post_list.html" (dict "Context" . "Pages" $pages) -}}
+
+{{- end }}

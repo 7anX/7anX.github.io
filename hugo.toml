@@ -1,6 +1,6 @@
 baseURL = "https://7anX.github.io/"
 defaultContentLanguage = "zh-cn"
-title = "7anX 的技术博客"
+title = "7anX 的博客"
 theme = "PaperMod"
 enableRobotsTXT = true
 hasCJKLanguage = true
@@ -11,6 +11,11 @@ hasCJKLanguage = true
 # 启用搜索功能所需的输出格式
 [outputs]
   home = ["HTML", "RSS", "JSON"]
+
+[taxonomies]
+  tag = "tags"
+  category = "categories"
+  series = "series"
 
 [params]
   # 主题模式：auto 跟随系统深/浅色偏好
@@ -91,7 +96,7 @@ hasCJKLanguage = true
   [[menu.main]]
     name = "关于"
     url = "/about/"
-    weight = 4
+    weight = 3
 
 # Markdown 渲染设置
 [markup]

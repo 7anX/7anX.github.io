@@ -4,7 +4,7 @@ date: 2026-06-17
 draft: false
 tags: ["技术", "Hugo", "博客"]
 categories: ["技术分享"]
-description: "这是我的第一篇技术博客文章，记录博客搭建过程"
+description: "这是我的第一篇博客文章，记录博客搭建过程"
 ShowToc: true
 TocOpen: true
 ---
@@ -52,7 +52,7 @@ func main() {
 ```yaml
 baseURL: "https://7anX.github.io/"
 languageCode: "zh-cn"
-title: "7anX 的技术博客"
+title: "7anX 的博客"
 theme: "PaperMod"
 ```
 

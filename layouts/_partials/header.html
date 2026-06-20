@@ -95,4 +95,7 @@
         </ul>
 
     </nav>
+    {{- if or .IsHome (and (eq .Kind "section") (eq .Section "posts")) }}
+    {{- partial "category_bar.html" . }}
+    {{- end }}
 </header>
