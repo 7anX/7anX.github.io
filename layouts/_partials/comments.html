@@ -22,23 +22,34 @@
         }, 'https://giscus.app');
       }
 
-      var script = document.createElement('script');
-      script.src = 'https://giscus.app/client.js';
-      script.async = true;
-      script.crossOrigin = 'anonymous';
-      script.setAttribute('data-repo', '{{ $giscus.repo }}');
-      script.setAttribute('data-repo-id', '{{ $giscus.repoId }}');
-      script.setAttribute('data-category', '{{ $giscus.category }}');
-      script.setAttribute('data-category-id', '{{ $giscus.categoryId }}');
-      script.setAttribute('data-mapping', '{{ default "pathname" $giscus.mapping }}');
-      script.setAttribute('data-strict', '{{ default "0" $giscus.strict }}');
-      script.setAttribute('data-reactions-enabled', '{{ default "1" $giscus.reactionsEnabled }}');
-      script.setAttribute('data-emit-metadata', '{{ default "0" $giscus.emitMetadata }}');
-      script.setAttribute('data-input-position', '{{ default "bottom" $giscus.inputPosition }}');
-      script.setAttribute('data-theme', getGiscusTheme());
-      script.setAttribute('data-lang', '{{ default "zh-CN" $giscus.lang }}');
-      script.setAttribute('data-loading', '{{ default "lazy" $giscus.loading }}');
-      document.currentScript.parentElement.appendChild(script);
+      function loadGiscus() {
+        var script = document.createElement('script');
+        script.src = 'https://giscus.app/client.js';
+        script.async = true;
+        script.crossOrigin = 'anonymous';
+        script.setAttribute('data-repo', '{{ $giscus.repo }}');
+        script.setAttribute('data-repo-id', '{{ $giscus.repoId }}');
+        script.setAttribute('data-category', '{{ $giscus.category }}');
+        script.setAttribute('data-category-id', '{{ $giscus.categoryId }}');
+        script.setAttribute('data-mapping', '{{ default "pathname" $giscus.mapping }}');
+        script.setAttribute('data-strict', '{{ default "0" $giscus.strict }}');
+        script.setAttribute('data-reactions-enabled', '{{ default "1" $giscus.reactionsEnabled }}');
+        script.setAttribute('data-emit-metadata', '{{ default "0" $giscus.emitMetadata }}');
+        script.setAttribute('data-input-position', '{{ default "bottom" $giscus.inputPosition }}');
+        script.setAttribute('data-theme', getGiscusTheme());
+        script.setAttribute('data-lang', '{{ default "zh-CN" $giscus.lang }}');
+        // ponytail: 去掉 data-loading=lazy，由外层 IntersectionObserver 提前 600px 触发
+        document.querySelector('.comments').appendChild(script);
+      }
+
+      var section = document.currentScript.parentElement;
+      var io = new IntersectionObserver(function (entries) {
+        if (entries[0].isIntersecting) {
+          io.disconnect();
+          loadGiscus();
+        }
+      }, { rootMargin: '0px 0px 600px 0px' });
+      io.observe(section);
 
       var observer = new MutationObserver(updateGiscusTheme);
       observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class', 'data-theme'] });

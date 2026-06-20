@@ -1,3 +1,6 @@
+<link rel="preload" href="https://cdn.jsdelivr.net/npm/lxgw-wenkai-webfont@1.7.0/style.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+<noscript><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/lxgw-wenkai-webfont@1.7.0/style.css"></noscript>
+
 {{- if (.Param "ShowToc") }}
 <script>
 document.addEventListener('DOMContentLoaded', function () {
@@ -33,15 +36,21 @@ document.addEventListener('DOMContentLoaded', function () {
     if (el) headings.push({ el: el, a: a });
   });
 
+  var rafPending = false;
   function onScroll() {
-    var scrollY = window.scrollY + 80;
-    var current = null;
-    for (var i = 0; i < headings.length; i++) {
-      if (headings[i].el.offsetTop <= scrollY) current = headings[i];
-      else break;
-    }
-    links.forEach(function (a) { a.classList.remove('active'); });
-    if (current) current.a.classList.add('active');
+    if (rafPending) return;
+    rafPending = true;
+    requestAnimationFrame(function () {
+      rafPending = false;
+      var scrollY = window.scrollY + 80;
+      var current = null;
+      for (var i = 0; i < headings.length; i++) {
+        if (headings[i].el.offsetTop <= scrollY) current = headings[i];
+        else break;
+      }
+      links.forEach(function (a) { a.classList.remove('active'); });
+      if (current) current.a.classList.add('active');
+    });
   }
 
   window.addEventListener('scroll', onScroll, { passive: true });
@@ -220,8 +229,16 @@ document.addEventListener('DOMContentLoaded', function () {
     searchInput.dispatchEvent(new Event('input', { bubbles: true }));
   }
 
-  applySearchQuery();
-  window.setTimeout(applySearchQuery, 250);
-  window.setTimeout(applySearchQuery, 700);
+  // ponytail: loadIndex 完成后触发一次，不再需要 setTimeout 重试
+  var headerSearch = document.querySelector('.header-search');
+  if (headerSearch) {
+    var indexUrl = new URL('{{ "index.json" | absLangURL }}', window.location.href).toString();
+    fetch(indexUrl)
+      .then(function (r) { return r.ok ? r.json() : []; })
+      .then(function () { applySearchQuery(); })
+      .catch(function () { applySearchQuery(); });
+  } else {
+    applySearchQuery();
+  }
 });
 </script>
