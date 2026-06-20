@@ -28,7 +28,6 @@
       var categories = (entry.getAttribute('data-categories') || '').split('||');
       var show = category === 'all' || categories.indexOf(category) !== -1;
       entry.classList.toggle('category-filtered-out', !show);
-      entry.style.display = show ? '' : 'none';
     });
   }
 

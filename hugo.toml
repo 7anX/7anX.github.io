@@ -50,10 +50,7 @@ hasCJKLanguage = true
     minMatchCharLength = 0
     keys = ["title", "permalink", "summary", "content"]
 
-  # 首页信息展示
-  [params.homeInfoParams]
-    Title = "Hi, 我是 7anX 👋"
-    Content = "这里记录我的技术探索与学习笔记，欢迎一起交流。"
+
 
   # 社交图标
   [[params.socialIcons]]
@@ -87,7 +84,7 @@ hasCJKLanguage = true
 [menu]
   [[menu.main]]
     name = "文章"
-    url = "/posts/"
+    url = "/"
     weight = 1
   [[menu.main]]
     name = "标签"
