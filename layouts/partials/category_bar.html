@@ -1,56 +1,18 @@
 {{- $posts := where site.RegularPages "Type" "in" site.Params.mainSections -}}
 {{- $categories := site.Taxonomies.categories.Alphabetical -}}
+{{- $activeCategory := .ActiveCategory | default "all" -}}
 {{- if $categories }}
 <nav class="category-bar" aria-label="文章分类">
   <span class="category-bar-label">分类</span>
-  <button class="category-chip active" type="button" data-category="all">
+  <a class="category-chip{{ if eq $activeCategory "all" }} active{{ end }}" href="{{ "/" | absLangURL }}">
     全部 <span>{{ len $posts }}</span>
-  </button>
+  </a>
   {{- range $categories }}
   {{- $name := .Name }}
   {{- $catPosts := where $posts "Params.categories" "intersect" (slice $name) -}}
-  <button class="category-chip" type="button" data-category="{{ $name }}">
+  <a class="category-chip{{ if eq $activeCategory $name }} active{{ end }}" href="{{ printf "/%s/" $name | absLangURL }}">
     {{ $name }} <span>{{ len $catPosts }}</span>
-  </button>
+  </a>
   {{- end }}
 </nav>
-<script>
-(function () {
-  function filterPosts(bar, category) {
-    var buttons = Array.prototype.slice.call(bar.querySelectorAll('[data-category]'));
-    var entries = Array.prototype.slice.call(document.querySelectorAll('article[data-categories]'));
-
-    buttons.forEach(function (item) {
-      item.classList.toggle('active', item.getAttribute('data-category') === category);
-    });
-
-    entries.forEach(function (entry) {
-      var categories = (entry.getAttribute('data-categories') || '').split('||');
-      var show = category === 'all' || categories.indexOf(category) !== -1;
-      entry.classList.toggle('category-filtered-out', !show);
-    });
-  }
-
-  function initCategoryBar() {
-    var bar = document.querySelector('.category-bar');
-    if (!bar || bar.dataset.ready === 'true') return;
-    bar.dataset.ready = 'true';
-
-    Array.prototype.slice.call(bar.querySelectorAll('[data-category]')).forEach(function (button) {
-      button.addEventListener('click', function (event) {
-        event.preventDefault();
-        event.stopPropagation();
-        filterPosts(bar, button.getAttribute('data-category'));
-      });
-    });
-  }
-
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', initCategoryBar);
-  } else {
-    initCategoryBar();
-  }
-  window.addEventListener('load', initCategoryBar);
-})();
-</script>
 {{- end }}

@@ -95,7 +95,10 @@
         </ul>
 
     </nav>
-    {{- if or .IsHome (and (eq .Kind "section") (eq .Section "posts")) }}
-    {{- partial "category_bar.html" . }}
+    {{- $showBar := or .IsHome (and (eq .Kind "section") (in site.Params.mainSections .Section)) }}
+    {{- if $showBar }}
+    {{- $activeCategory := cond .IsHome "all" .Section }}
+    {{- partial "category_bar.html" (dict "ActiveCategory" $activeCategory) }}
     {{- end }}
+
 </header>
