@@ -1,9 +1,9 @@
----
+﻿---
 title: "A2A 暴露面的安全问题"
 date: 2026-06-20
 draft: false
 tags: ["A2A", "安全", "暴露面", "AI Agent", "Agent Card"]
-categories: ["安全研究"]
+categories: ["security-research"]
 series: ["AI Agent 安全"]
 description: "A2A Agent Card 设计带来的暴露面问题：什么信息不该放进卡片，为什么公开 JSON-RPC 比公开卡片更危险。"
 ShowToc: true
@@ -287,7 +287,7 @@ agentscan a2a 10.0.0.0/16 -o a2a-results.json
 - Card 里是否包含私网地址
 - 是否存在扩展字段信息泄露
 
-具体探测逻辑见《[AgentScan 工作原理](../agentscan-architecture/)》。
+具体探测逻辑见《[AgentScan 工作原理](/agentscan/agentscan-architecture/)》。
 
 ## 修复建议
 
@@ -299,5 +299,5 @@ agentscan a2a 10.0.0.0/16 -o a2a-results.json
 
 ---
 
-*上一篇：[MCP 暴露面的安全问题](../mcp-attack-surface/)*  
-*下一篇：[AgentScan 使用说明](../agentscan-use-cases/)，如何用 AgentScan 扫出这些问题。*
+*上一篇：[MCP 暴露面的安全问题](/security-research/mcp-attack-surface/)*  
+*下一篇：[AgentScan 使用说明](/agentscan/agentscan-use-cases/)，如何用 AgentScan 扫出这些问题。*

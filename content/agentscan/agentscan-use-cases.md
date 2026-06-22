@@ -1,16 +1,16 @@
----
+﻿---
 title: "AgentScan 使用说明：找出你环境里的 AI 暴露面"
 date: 2026-06-20
 draft: false
 tags: ["AgentScan", "MCP", "A2A", "LLM", "安全工具", "使用教程"]
-categories: ["安全工具"]
+categories: ["agentscan"]
 series: ["AgentScan"]
 description: "AgentScan 的安装、目标格式、常用命令和典型工作流。知道 MCP 和 A2A 有什么暴露面问题之后，怎么在自己的环境里扫出来。"
 ShowToc: true
 TocOpen: true
 ---
 
-前两篇文章讲了 [MCP](../mcp-attack-surface/) 和 [A2A](../a2a-attack-surface/) 的暴露面问题。这篇讲怎么用 AgentScan 在实际环境里找出这些问题。
+前两篇文章讲了 [MCP](/security-research/mcp-attack-surface/) 和 [A2A](/security-research/a2a-attack-surface/) 的暴露面问题。这篇讲怎么用 AgentScan 在实际环境里找出这些问题。
 
 AgentScan 不是通用端口扫描器的套壳，它直接面向 MCP、A2A 和 LLM 推理 API 的协议层做识别。扫到"端口开着"是起点，不是终点——它继续往下做协议握手、能力枚举，输出认证状态和证据。
 
@@ -110,8 +110,8 @@ agentscan scan 192.168.0.0/16 --timeout 300 --threads 2000 -o internal-ai.json
 
 你会看到：
 
-- 哪些 MCP Server 没有认证（直接对应[上一篇 MCP 文章](../mcp-attack-surface/)里的问题）
-- 哪些 Agent Card 公开了高危 skill 或内网地址（对应 [A2A 文章](../a2a-attack-surface/)里的问题）
+- 哪些 MCP Server 没有认证（直接对应[上一篇 MCP 文章](/security-research/mcp-attack-surface/)里的问题）
+- 哪些 Agent Card 公开了高危 skill 或内网地址（对应 [A2A 文章](/security-research/a2a-attack-surface/)里的问题）
 - 哪些 LLM 推理 API 完全开放
 - 哪些有认证但认证级别是什么
 
@@ -241,7 +241,7 @@ http_server_hints.txt  # 判断 HTTP 服务的 Server header hints
 agentscan llm -f targets.txt --template-dir ./my-templates
 ```
 
-模板格式是 YAML，同名 `info.name` 会覆盖内置模板。详情见[工作原理文章](../agentscan-architecture/)。
+模板格式是 YAML，同名 `info.name` 会覆盖内置模板。详情见[工作原理文章](/agentscan/agentscan-architecture/)。
 
 ## 和安全文章的对应关系
 
@@ -250,12 +250,12 @@ AgentScan 输出的每个字段对应着具体的暴露面问题：
 | 输出字段 | 对应问题 |
 | --- | --- |
 | `auth_status: no-auth` | MCP/A2A/LLM 无认证，任何人可访问 |
-| `tools` 非空 | MCP 工具列表可枚举（[MCP 文章第 2 节](../mcp-attack-surface/#2-工具列表是公开的能力清单)） |
+| `tools` 非空 | MCP 工具列表可枚举（[MCP 文章第 2 节](/security-research/mcp-attack-surface/#2-工具列表是公开的能力清单)） |
 | `resources` 非空 | MCP 资源 URI 可枚举，可能包含内部路径 |
-| `private_host_in_card` | A2A Card 里有私网地址（[A2A 文章第 3 节](../a2a-attack-surface/#3-url-字段暴露内部-json-rpc-端点)） |
+| `private_host_in_card` | A2A Card 里有私网地址（[A2A 文章第 3 节](/security-research/a2a-attack-surface/#3-url-字段暴露内部-json-rpc-端点)） |
 | `json_rpc_reachable: true` | A2A JSON-RPC 端点无认证可达 |
 | `honeypot_signals` 非空 | 可能是蜜罐，加 `--exclude-honeypots` 过滤 |
 
 ---
 
-*工具的识别逻辑详见《[AgentScan 工作原理](../agentscan-architecture/)》。*
+*工具的识别逻辑详见《[AgentScan 工作原理](/agentscan/agentscan-architecture/)》。*

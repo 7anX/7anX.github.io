@@ -1,9 +1,9 @@
----
+﻿---
 title: "MCP 暴露面的安全问题"
 date: 2026-06-20
 draft: false
 tags: ["MCP", "安全", "暴露面", "AI Agent"]
-categories: ["安全研究"]
+categories: ["security-research"]
 series: ["AI Agent 安全"]
 description: "MCP 的协议设计给攻击者提供了哪些切入点，以及为什么它的暴露面和传统 HTTP API 不是一回事。"
 ShowToc: true
@@ -331,7 +331,7 @@ agentscan scan 10.0.0.0/16 -o results.json
 - 资源列表
 - 蜜罐信号
 
-关于 AgentScan 的具体原理，见《[AgentScan 工作原理：MCP、A2A 与 LLM 指纹识别](../agentscan-architecture/)》。
+关于 AgentScan 的具体原理，见《[AgentScan 工作原理：MCP、A2A 与 LLM 指纹识别](/agentscan/agentscan-architecture/)》。
 
 ## 修复建议
 
@@ -343,4 +343,4 @@ agentscan scan 10.0.0.0/16 -o results.json
 
 ---
 
-*下一篇：[A2A 暴露面的安全问题](../a2a-attack-surface/)，讲 Agent Card 设计带来的暴露面问题。*
+*下一篇：[A2A 暴露面的安全问题](/security-research/a2a-attack-surface/)，讲 Agent Card 设计带来的暴露面问题。*

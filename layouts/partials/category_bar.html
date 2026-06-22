@@ -1,4 +1,4 @@
-{{- $posts := where site.RegularPages "Type" "posts" -}}
+{{- $posts := where site.RegularPages "Type" "in" site.Params.mainSections -}}
 {{- $categories := site.Taxonomies.categories.Alphabetical -}}
 {{- if $categories }}
 <nav class="category-bar" aria-label="文章分类">
@@ -8,9 +8,9 @@
   </button>
   {{- range $categories }}
   {{- $name := .Name }}
-  {{- $count := .Count }}
+  {{- $catPosts := where $posts "Params.categories" "intersect" (slice $name) -}}
   <button class="category-chip" type="button" data-category="{{ $name }}">
-    {{ $name }} <span>{{ $count }}</span>
+    {{ $name }} <span>{{ len $catPosts }}</span>
   </button>
   {{- end }}
 </nav>
