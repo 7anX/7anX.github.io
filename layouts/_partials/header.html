@@ -95,7 +95,8 @@
         </ul>
 
     </nav>
-    {{- $showBar := or .IsHome (and (eq .Kind "section") (in site.Params.mainSections .Section)) }}
+    {{- $excluded := site.Params.excludeSections | default slice }}
+    {{- $showBar := or .IsHome (and (eq .Kind "section") (not (in $excluded .Section))) }}
     {{- if $showBar }}
     {{- $activeCategory := cond .IsHome "all" .Section }}
     {{- partial "category_bar.html" (dict "ActiveCategory" $activeCategory) }}

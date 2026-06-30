@@ -1,6 +1,6 @@
 ﻿{{- define "main" }}
 
-{{- $pages := where site.RegularPages "Type" "in" site.Params.mainSections -}}
+{{- $pages := where site.RegularPages "Type" "not in" (site.Params.excludeSections | default slice) -}}
 {{- partial "post_list.html" (dict "Context" . "Pages" $pages) -}}
 
 {{- end }}

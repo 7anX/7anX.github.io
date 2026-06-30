@@ -19,7 +19,8 @@ hasCJKLanguage = true
 
 [params]
   # 首页显示所有 section 的文章（不只是 posts/）
-  mainSections = ["security-research", "agentscan"]
+  # 排除列表：这些 section 不出现在文章列表里（新建目录自动生效，无需手动添加）
+  excludeSections = ["search"]
 
   # 主题模式：auto 跟随系统深/浅色偏好
   defaultTheme = "auto"

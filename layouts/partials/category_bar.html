@@ -1,4 +1,4 @@
-{{- $posts := where site.RegularPages "Type" "in" site.Params.mainSections -}}
+{{- $posts := where site.RegularPages "Type" "not in" (site.Params.excludeSections | default slice) -}}
 {{- $categories := site.Taxonomies.categories.Alphabetical -}}
 {{- $activeCategory := .ActiveCategory | default "all" -}}
 {{- if $categories }}
