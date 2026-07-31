@@ -22,10 +22,219 @@ MCP（Model Context Protocol）是 Anthropic 在 2024 年底推出的开放协�
 - **Resources**：可读取的数据，比如文件内容、数据库记录
 - **Prompts**：预定义的提示词模板
 
-传输层有两个版本：
+传输层经历了三代演进，每一代的连接方式、握手流程和身份下发位置都不一样：
 
-- **Streamable HTTP**（2025-03-26 规范）：单个 HTTP 端点，POST 初始化，支持 SSE 响应流
 - **HTTP+SSE legacy**（2024-11-05 规范）：客户端 GET 建立 SSE 连接，再向 POST 端点发请求，通过 SSE 流接收响应
+- **Streamable HTTP / session-based**（2025-03-26、2025-06-18 规范）：单个 HTTP 端点，POST 初始化，session 通过响应头下发
+- **Streamable HTTP / stateless**（2026-07-28 规范）：无握手、无 session，每个请求自带版本与身份
+
+三代之间的差异直接决定了扫描器该怎么"判活"。下面按时代逐一列出从连接到拿到工具列表的完整 HTTP 报文，版本间差异一眼可见。
+
+## 三代传输报文对照
+
+理解暴露面之前，先看清每代协议从连接到拿到工具列表的完整报文（HTTP 头 + JSON-RPC body），这样版本间差异一目了然。
+
+### 时代一：`2024-11-05` — HTTP+SSE（legacy，现已 Deprecated）
+
+**特点**：两个端点。先 GET `/sse` 开一条**长连接**，服务器推一个 `endpoint` 事件告诉你 POST 该发去哪；之后所有请求 POST 到那个地址，响应从 SSE 长连接里回来。session 和连接绑定，断开即失效。
+
+**① GET 建立 SSE 连接**
+
+```http
+GET /sse HTTP/1.1
+Host: example.com
+Accept: text/event-stream
+```
+
+响应（连接不关，持续推）：
+
+```http
+HTTP/1.1 200 OK
+Content-Type: text/event-stream
+
+event: endpoint
+data: /messages?session_id=abc123
+```
+
+`data` 里这个路径就是后续 POST 的目标。
+
+**② POST initialize**（发到上一步拿到的 `/messages?session_id=abc123`）
+
+```http
+POST /messages?session_id=abc123 HTTP/1.1
+Content-Type: application/json
+
+{"jsonrpc":"2.0","id":1,"method":"initialize",
+ "params":{"protocolVersion":"2024-11-05","capabilities":{},
+           "clientInfo":{"name":"c","version":"1.0"}}}
+```
+
+HTTP 立即返回 `202 Accepted`（空 body），**真正的响应从 SSE 长连接推回**：
+
+```
+event: message
+data: {"jsonrpc":"2.0","id":1,"result":{"protocolVersion":"2024-11-05",
+      "capabilities":{"tools":{}},"serverInfo":{"name":"srv","version":"1.0"}}}
+```
+
+**③ POST notifications/initialized**（握手收尾，无响应）
+
+```json
+{"jsonrpc":"2.0","method":"notifications/initialized"}
+```
+
+**④ POST tools/list** → 结果同样从 SSE 流推回：
+
+```json
+{"jsonrpc":"2.0","id":2,"method":"tools/list","params":{}}
+```
+
+```
+event: message
+data: {"jsonrpc":"2.0","id":2,"result":{"tools":[{"name":"get_weather","description":"...","inputSchema":{...}}]}}
+```
+
+### 时代二：`2025-03-26` / `2025-06-18` — Streamable HTTP（session-based，legacy）
+
+**特点**：单端点 `/mcp`，每条消息一个 POST。`initialize` 握手仍在，但 session 通过 **`Mcp-Session-Id` 响应头**下发，后续请求靠这个头带回。响应可以是单个 JSON，也可以是 SSE 流。**这是 AgentScan 现在实现的版本。**
+
+**① POST initialize**
+
+```http
+POST /mcp HTTP/1.1
+Content-Type: application/json
+Accept: application/json, text/event-stream
+
+{"jsonrpc":"2.0","id":1,"method":"initialize",
+ "params":{"protocolVersion":"2025-06-18","capabilities":{},
+           "clientInfo":{"name":"c","version":"1.0"}}}
+```
+
+响应——session id 在**响应头**里：
+
+```http
+HTTP/1.1 200 OK
+Content-Type: application/json
+Mcp-Session-Id: 1868a90c-abc
+
+{"jsonrpc":"2.0","id":1,"result":{"protocolVersion":"2025-06-18",
+ "capabilities":{"tools":{},"resources":{}},
+ "serverInfo":{"name":"srv","version":"1.0"}}}
+```
+
+**② POST notifications/initialized**（带上 session 头）
+
+```http
+POST /mcp HTTP/1.1
+Content-Type: application/json
+Mcp-Session-Id: 1868a90c-abc
+
+{"jsonrpc":"2.0","method":"notifications/initialized"}
+```
+
+→ `202 Accepted`
+
+**③ POST tools/list**（必须带 session 头，`2025-06-18` 起还要带 `MCP-Protocol-Version` 头）
+
+```http
+POST /mcp HTTP/1.1
+Content-Type: application/json
+Accept: application/json, text/event-stream
+Mcp-Session-Id: 1868a90c-abc
+MCP-Protocol-Version: 2025-06-18
+
+{"jsonrpc":"2.0","id":2,"method":"tools/list","params":{}}
+```
+
+```http
+HTTP/1.1 200 OK
+Content-Type: application/json
+
+{"jsonrpc":"2.0","id":2,"result":{"tools":[{"name":"get_weather","inputSchema":{...}}]}}
+```
+
+关键区别：**没有 GET 拿 endpoint 那一步**，session 在头里而不是 URL query 里。
+
+### 时代三：`2026-07-28` — Streamable HTTP（stateless，modern）
+
+**特点**：**无握手、无 session**。每个请求自带版本+身份（塞在 `params._meta`）。探活/查身份用 `server/discover`。必需 HTTP 头 `MCP-Protocol-Version` + `Mcp-Method` 且要和 body 对齐，否则 `400`。
+
+**① POST server/discover**（取代 initialize，一发拿全信息）
+
+```http
+POST /mcp HTTP/1.1
+Content-Type: application/json
+Accept: application/json, text/event-stream
+MCP-Protocol-Version: 2026-07-28
+Mcp-Method: server/discover
+
+{"jsonrpc":"2.0","id":"d1","method":"server/discover",
+ "params":{"_meta":{
+   "io.modelcontextprotocol/protocolVersion":"2026-07-28",
+   "io.modelcontextprotocol/clientInfo":{"name":"c","version":"1.0"},
+   "io.modelcontextprotocol/clientCapabilities":{}
+ }}}
+```
+
+响应（`DiscoverResult`）——注意 `serverInfo` 挪进了 `result._meta`，并多了 `resultType`/`ttlMs`/`cacheScope`：
+
+```http
+HTTP/1.1 200 OK
+Content-Type: application/json
+
+{"jsonrpc":"2.0","id":"d1","result":{
+  "resultType":"complete",
+  "supportedVersions":["2026-07-28"],
+  "capabilities":{"tools":{},"resources":{}},
+  "_meta":{"io.modelcontextprotocol/serverInfo":{"name":"srv","version":"1.0"}},
+  "instructions":"...","ttlMs":3600000,"cacheScope":"public"}}
+```
+
+**② POST tools/list**（直接发，不需要任何前置握手）
+
+```http
+POST /mcp HTTP/1.1
+Content-Type: application/json
+Accept: application/json, text/event-stream
+MCP-Protocol-Version: 2026-07-28
+Mcp-Method: tools/list
+
+{"jsonrpc":"2.0","id":2,"method":"tools/list",
+ "params":{"_meta":{"io.modelcontextprotocol/protocolVersion":"2026-07-28"}}}
+```
+
+```http
+HTTP/1.1 200 OK
+Content-Type: application/json
+
+{"jsonrpc":"2.0","id":2,"result":{
+  "resultType":"complete",
+  "tools":[{"name":"get_weather","inputSchema":{...}}],
+  "ttlMs":3600000,"cacheScope":"public"}}
+```
+
+**版本不匹配时的响应**（这也是"存活"证据）：
+
+```json
+{"jsonrpc":"2.0","id":2,"error":{"code":-32022,
+ "message":"Unsupported protocol version",
+ "data":{"supported":["2026-07-28","2025-11-25"],"requested":"1900-01-01"}}}
+```
+
+### 三代对比速查
+
+| | 2024-11-05 (SSE) | 2025-03-26/06-18 (Streamable) | 2026-07-28 (modern) |
+|---|---|---|---|
+| 端点 | GET `/sse` + POST `/messages` | 单 POST `/mcp` | 单 POST `/mcp` |
+| 握手 | `initialize` + `initialized` | `initialize` + `initialized` | **无握手** |
+| 探活入口 | `initialize`（经 SSE 回推） | `initialize`（直接响应） | **`server/discover`** |
+| session | URL query `session_id` | `Mcp-Session-Id` **响应头** | **无 session** |
+| 版本/身份位置 | `params` 顶层 | `params` 顶层 | **`params._meta`** |
+| 必需请求头 | `Accept: text/event-stream` | `Accept` 双类型（+`MCP-Protocol-Version`） | +`Mcp-Method`，头须与 body 对齐 |
+| 响应身份字段 | `result.serverInfo` | `result.serverInfo` | `result._meta['io.modelcontextprotocol/serverInfo']` |
+| 独有指纹 | `endpoint` 事件 | `Mcp-Session-Id` 头 | `resultType`/`supportedVersions`/`ttlMs`/`-32020`/`-32022` |
+
+前两代 AgentScan 已覆盖，第三代（modern）完全没实现——这正是需要补的探活路径。
 
 ## 暴露面从哪里来
 
