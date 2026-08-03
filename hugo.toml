@@ -101,6 +101,10 @@ hasCJKLanguage = true
 
 # Markdown 渲染设置
 [markup]
+  [markup.goldmark.parser.attribute]
+    # 允许用 {#id} 给标题指定锚点，保证中文标题内部链接可靠跳转
+    block = true
+    title = true
   [markup.highlight]
     anchorLineNos = false
     codeFences = true
